@@ -1,0 +1,4 @@
+pl/fuzzy/industrial/App.class
+pl/fuzzy/industrial/FuzzyService.class
+pl/fuzzy/industrial/KafkaInfrastructure.class
+pl/fuzzy/industrial/RuleGui.class

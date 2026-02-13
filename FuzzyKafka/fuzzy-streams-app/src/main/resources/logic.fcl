@@ -1,0 +1,69 @@
+FUNCTION_BLOCK predictive_maintenance
+
+VAR_INPUT
+    air_temp : REAL;
+    rot_speed : REAL;    // Rotational speed
+    torque : REAL;       // Torque (moment obrotowy) [Nm]
+    tool_wear : REAL;    // Tool wear (zuzycie narzedzia) [min]
+END_VAR
+
+VAR_OUTPUT
+    risk : REAL;
+END_VAR
+
+// Definicje zbiorow
+
+FUZZIFY air_temp
+    TERM cool := (290, 1) (298, 0);
+    TERM normal := (295, 0) (300, 1) (305, 0);
+    TERM hot := (302, 0) (315, 1);
+END_FUZZIFY
+
+FUZZIFY rot_speed
+    TERM low := (1300, 1) (1500, 0);
+    TERM optimal := (1400, 0) (1500, 1) (1600, 1) (1700, 0);
+    TERM high := (1650, 0) (2900, 1);
+END_FUZZIFY
+
+FUZZIFY torque
+    TERM low := (0, 1) (30, 0);
+    TERM medium := (25, 0) (40, 1) (55, 0);
+    TERM high := (50, 0) (80, 1);
+END_FUZZIFY
+
+FUZZIFY tool_wear
+    TERM new := (0, 1) (60, 0);
+    TERM used := (50, 0) (120, 1) (180, 0);
+    TERM worn := (160, 0) (200, 1) (250, 1);
+END_FUZZIFY
+
+DEFUZZIFY risk
+    TERM low := (0, 1) (30, 0);
+    TERM medium := (25, 0) (45, 1) (75, 0);
+    TERM high := (70, 0) (100, 1);
+    METHOD : COG;     // Center of Gravity
+    DEFAULT := 0;
+END_DEFUZZIFY
+RULEBLOCK No1
+    AND : MIN;        // Operator koniunkcji
+    OR : MAX;         // Operator alternatywy
+    ACT : MIN;        // Metoda aktywacji
+    ACCU : MAX;       // Metoda akumulacji
+
+    RULE 1 : IF tool_wear IS worn THEN risk IS high;
+
+    RULE 2 : IF rot_speed IS high AND torque IS high THEN risk IS high;
+
+    RULE 3 : IF rot_speed IS optimal AND torque IS medium AND tool_wear IS new THEN risk IS low;
+
+    RULE 4 : IF air_temp IS hot THEN risk IS medium;
+
+    RULE 5 : IF rot_speed IS low AND torque IS high THEN risk IS high;
+
+    RULE 6 : IF air_temp IS normal AND tool_wear IS used THEN risk IS medium;
+
+    RULE 7 : IF air_temp IS cool THEN risk IS low;
+    RULE 8 : IF rot_speed IS low THEN risk IS low;
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
